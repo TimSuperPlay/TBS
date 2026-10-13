@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91ac132065a637e4981d00b6370aded2, type: 3}
+  m_Name: WaterConfig 2
+  m_EditorClassIdentifier: Assembly-CSharp::TileConfig
+  tileName: Water
+  resourceName: 
+  sprite: {fileID: 1300775673, guid: 35f80761922a0a04980eae1599c061c1, type: 3}
+  neighbourSpawnChances:
+  - neighbour: Grass
+    chance: 40
+  - neighbour: Forest
+    chance: 20
+  - neighbour: Water
+    chance: 50
+  defaultChance: 3
+  normalSpeedOn: 0
+  lightSpeedOn: 0
+  heavySpeedOn: 0
+  isCanBuild: 0

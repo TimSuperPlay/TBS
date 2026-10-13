@@ -1,0 +1,130 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4eef992ad0fc78448aef31485961a48c, type: 3}
+  m_Name: BishopConfig
+  m_EditorClassIdentifier: Assembly-CSharp::FiguresConfig
+  OnlyMove:
+  - MoveCells: {x: 1, y: 0}
+    IsJump: 0
+  - MoveCells: {x: 0, y: 1}
+    IsJump: 0
+  - MoveCells: {x: -1, y: 0}
+    IsJump: 0
+  - MoveCells: {x: 0, y: -1}
+    IsJump: 0
+  TakeAndMove:
+  - MoveCells: {x: 1, y: 1}
+    IsJump: 0
+  - MoveCells: {x: 2, y: 2}
+    IsJump: 0
+  - MoveCells: {x: 3, y: 3}
+    IsJump: 0
+  - MoveCells: {x: 4, y: 4}
+    IsJump: 0
+  - MoveCells: {x: 5, y: 5}
+    IsJump: 0
+  - MoveCells: {x: 6, y: 6}
+    IsJump: 0
+  - MoveCells: {x: 7, y: 7}
+    IsJump: 0
+  - MoveCells: {x: 8, y: 8}
+    IsJump: 0
+  - MoveCells: {x: 1, y: -1}
+    IsJump: 0
+  - MoveCells: {x: 2, y: -2}
+    IsJump: 0
+  - MoveCells: {x: 3, y: -3}
+    IsJump: 0
+  - MoveCells: {x: 4, y: -4}
+    IsJump: 0
+  - MoveCells: {x: 5, y: -5}
+    IsJump: 0
+  - MoveCells: {x: 6, y: -6}
+    IsJump: 0
+  - MoveCells: {x: 7, y: -7}
+    IsJump: 0
+  - MoveCells: {x: 8, y: -8}
+    IsJump: 0
+  - MoveCells: {x: -1, y: -1}
+    IsJump: 0
+  - MoveCells: {x: -2, y: -2}
+    IsJump: 0
+  - MoveCells: {x: -3, y: -3}
+    IsJump: 0
+  - MoveCells: {x: -4, y: -4}
+    IsJump: 0
+  - MoveCells: {x: -5, y: -5}
+    IsJump: 0
+  - MoveCells: {x: -6, y: -6}
+    IsJump: 0
+  - MoveCells: {x: -7, y: -7}
+    IsJump: 0
+  - MoveCells: {x: -8, y: -8}
+    IsJump: 0
+  - MoveCells: {x: -1, y: 1}
+    IsJump: 0
+  - MoveCells: {x: -2, y: 2}
+    IsJump: 0
+  - MoveCells: {x: -3, y: 3}
+    IsJump: 0
+  - MoveCells: {x: -4, y: 4}
+    IsJump: 0
+  - MoveCells: {x: -5, y: 5}
+    IsJump: 0
+  - MoveCells: {x: -6, y: 6}
+    IsJump: 0
+  - MoveCells: {x: -7, y: 7}
+    IsJump: 0
+  - MoveCells: {x: -8, y: 8}
+    IsJump: 0
+  OnlyTake:
+  - MoveCells: {x: 2, y: 0}
+    IsJump: 0
+    IsWithMove: 0
+  - MoveCells: {x: 3, y: 0}
+    IsJump: 0
+    IsWithMove: 0
+  - MoveCells: {x: 4, y: 0}
+    IsJump: 0
+    IsWithMove: 0
+  - MoveCells: {x: 0, y: 2}
+    IsJump: 0
+    IsWithMove: 0
+  - MoveCells: {x: 0, y: 3}
+    IsJump: 0
+    IsWithMove: 0
+  - MoveCells: {x: 0, y: 4}
+    IsJump: 0
+    IsWithMove: 0
+  - MoveCells: {x: -2, y: 0}
+    IsJump: 0
+    IsWithMove: 0
+  - MoveCells: {x: -3, y: 0}
+    IsJump: 0
+    IsWithMove: 0
+  - MoveCells: {x: -4, y: 0}
+    IsJump: 0
+    IsWithMove: 0
+  - MoveCells: {x: 0, y: -2}
+    IsJump: 0
+    IsWithMove: 0
+  - MoveCells: {x: 0, y: -3}
+    IsJump: 0
+    IsWithMove: 0
+  - MoveCells: {x: 0, y: -4}
+    IsJump: 0
+    IsWithMove: 0
+  OnlyMoveHighlight: {fileID: 4899599147563698624, guid: 4bd93e001cbf2df40a7b9bc243c65fbc, type: 3}
+  TakeAndMoveHighlight: {fileID: 4899599147563698624, guid: 2edb5a5b045c985438df22e7d3522f20, type: 3}
+  OnlyTakeWithMoveHighlight: {fileID: 4899599147563698624, guid: e93fcb011bd1a9c4ca120c8025133af0, type: 3}
+  OnlyTakeNoMoveHighlight: {fileID: 4899599147563698624, guid: bf4e775270c6c6549a67767a1f6353fe, type: 3}
+  IsCanSwim: 0

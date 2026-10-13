@@ -2,8 +2,15 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!78 &1
 TagManager:
-  serializedVersion: 2
-  tags: []
+  serializedVersion: 3
+  tags:
+  - highlight
+  - MapManager
+  - TurnManager
+  - GameManager
+  - BuildingFoundation
+  - White
+  - Black
   layers:
   - Default
   - TransparentFX
@@ -11,12 +18,12 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Figures
+  - Tiles
+  - Building
+  - Foundation
+  - TakingBuilding
+  - Blockable
   - 
   - 
   - 
@@ -41,3 +48,26 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: 1
+    uniqueID: 1072099741
+    locked: 0
+  - name: 2
+    uniqueID: 863293027
+    locked: 0
+  - name: 3
+    uniqueID: 1977688053
+    locked: 0
+  - name: do not use
+    uniqueID: 1250527697
+    locked: 0
+  - name: 5
+    uniqueID: 3167038013
+    locked: 0
+  - name: 6
+    uniqueID: 3982265147
+    locked: 0
+  - name: 7
+    uniqueID: 1638282721
+    locked: 0
+  m_RenderingLayers:
+  - Default
