@@ -65,7 +65,7 @@ public class TilesMovement : MonoBehaviour
     {
         if (statesStorage.isSelected) return;
         Debug.Log("selected");
-        statesStorage.isSelected = true; //������ �� �� ��������
+        statesStorage.isSelected = true; //Почему то не задается
         selected = true;
         foreach (var highlight in config.OnlyMove)
         {
@@ -99,7 +99,7 @@ public class TilesMovement : MonoBehaviour
 
             HighlightTileTakeAndMove highlightTile = spawnedHighlight.GetComponent<HighlightTileTakeAndMove>();
 
-            highlightTile.Init(this, targetX, targetY, highlight.isJump);
+            highlightTile.Init(this, targetX, targetY, highlight.isJump, highlight.damage);
 
             spawnedHighlights.Add(spawnedHighlight);
         }
@@ -118,7 +118,7 @@ public class TilesMovement : MonoBehaviour
 
             HighlightTileOnlyTake highlightTile = spawnedHighlight.GetComponent<HighlightTileOnlyTake>();
 
-            highlightTile.Init(this, targetX, targetY, highlight.isJump, highlight.IsWithMove);
+            highlightTile.Init(this, targetX, targetY, highlight.isJump, highlight.IsWithMove, highlight.damage);
 
             spawnedHighlights.Add(spawnedHighlight);
         }
@@ -136,6 +136,8 @@ public class TilesMovement : MonoBehaviour
 
     public void MoveToTile(int targetX, int targetY, bool isWithMove = true)
     {
+        if (isWithMove && LanMultiplayer.Instance != null)
+            LanMultiplayer.Instance.NotifyLocalMovement(this, targetX, targetY);
         if(isWithMove)
         {
             Vector3 worldOrigin = visual.transform.position;
@@ -154,6 +156,19 @@ public class TilesMovement : MonoBehaviour
         UnSelect();
     }
 
+    public void ApplyNetworkPosition(int targetX, int targetY)
+    {
+        x = targetX;
+        y = targetY;
+        if (tilesController == null)
+            tilesController = GameObject.FindGameObjectWithTag("MapManager").GetComponent<TilesController>();
+        transform.position = tilesController.CoordinatesToPosition(x, y);
+        isVisualMoving = false;
+        visualMovementprocent = 0f;
+        if (visual != null)
+            visual.transform.localPosition = Vector3.zero;
+        UnSelect();
+    }
     private void OnMouseDown()
     {
         if(!isActiveAndEnabled) return;
@@ -164,3 +179,7 @@ public class TilesMovement : MonoBehaviour
         }
     }
 }
+
+// Сетевой вызов меняет только положение и не повторяет локальные события ресурсов.
+
+

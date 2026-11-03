@@ -450,7 +450,7 @@ public class TilesGenerator : MonoBehaviour
         tilemap.gameObject.name = "ЭТОТ_ТАЙЛМАП_ИЗМЕНЯЕТСЯ!";
     }*/
 
-    private void ReplaceLonelyTile()
+    /*private void ReplaceLonelyTile()
     {
         // Сюда временно складываем замены.
         // Почему временно?
@@ -529,6 +529,42 @@ public class TilesGenerator : MonoBehaviour
         return bestGroup.First();
     }*/
 
+    private void ReplaceLonelyTile()
+    {
+        int changed = 0;
+
+        foreach (Vector2Int position in spawnedTiles.Keys.ToList())
+        {
+            TileConfig current = spawnedTiles[position];
+            if (current == null)
+                continue;
+
+            List<TileConfig> neighbours = GetNeighbours(position)
+                .Where(neighbour => neighbour != null)
+                .ToList();
+
+            if (neighbours.Count == 0)
+                continue;
+
+            if (neighbours.Any(neighbour => neighbour.tileName == current.tileName))
+                continue;
+
+            TileConfig replacement = neighbours
+                .GroupBy(neighbour => neighbour.tileName)
+                .OrderByDescending(group => group.Count())
+                .First()
+                .First();
+
+
+            spawnedTiles[position] = replacement;
+            tilemap.SetTile(
+                new Vector3Int(position.x, position.y, 0),
+                GetUnityTile(replacement));
+            changed++;
+        }
+
+        Debug.Log($"ReplaceLonelyTile changed: {changed}");
+    }
 
     private TileConfig ReplaceAt3(Vector2Int position)
     {

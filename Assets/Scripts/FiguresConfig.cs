@@ -14,11 +14,13 @@ public class FiguresConfig : ScriptableObject
     {
         public Vector2Int MoveCells;
         public bool isJump;
+        public float damage = 1;
     }
     [Serializable]
     public class OnlyAttack
     {
         public Vector2Int MoveCells;
         public bool isJump, IsWithMove;
+        public float damage = 1;
     }
 }
