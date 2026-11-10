@@ -33,8 +33,8 @@ public class HighlightTileOnlyTake : MonoBehaviour
         onFigure = Physics2D.BoxCast(transform.position, new(0.9f, 0.9f), 0, Vector2.one, 0f, figuresMask).collider;
         if (onFigure == null) Destroy(gameObject);
         if (!withMove) return;
-        float targetHealth = onFigure.GetComponent<Health>().Max;
-        if (targetHealth < damage) return;
+        float targetHealth = onFigure.GetComponent<Health>().Current;
+        if (targetHealth < damage+0.1) return;
             isBlocked = true;
             SpriteRenderer spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
             spriteRenderer.color = new(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, 0.5f);

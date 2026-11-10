@@ -14,115 +14,163 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FiguresConfig
   OnlyMove:
   - MoveCells: {x: 1, y: 0}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 0, y: 1}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -1, y: 0}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 0, y: -1}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   TakeAndMove:
   - MoveCells: {x: 1, y: 1}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 2, y: 2}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 3, y: 3}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 4, y: 4}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 5, y: 5}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 6, y: 6}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 7, y: 7}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 8, y: 8}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 1, y: -1}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 2, y: -2}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 3, y: -3}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 4, y: -4}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 5, y: -5}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 6, y: -6}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 7, y: -7}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: 8, y: -8}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -1, y: -1}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -2, y: -2}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -3, y: -3}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -4, y: -4}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -5, y: -5}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -6, y: -6}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -7, y: -7}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -8, y: -8}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -1, y: 1}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -2, y: 2}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -3, y: 3}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -4, y: 4}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -5, y: 5}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -6, y: 6}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -7, y: 7}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   - MoveCells: {x: -8, y: 8}
-    IsJump: 0
+    isJump: 0
+    damage: 1
   OnlyTake:
   - MoveCells: {x: 2, y: 0}
-    IsJump: 0
+    isJump: 0
     IsWithMove: 0
+    damage: 1
   - MoveCells: {x: 3, y: 0}
-    IsJump: 0
+    isJump: 0
     IsWithMove: 0
+    damage: 1
   - MoveCells: {x: 4, y: 0}
-    IsJump: 0
+    isJump: 0
     IsWithMove: 0
+    damage: 1
   - MoveCells: {x: 0, y: 2}
-    IsJump: 0
+    isJump: 0
     IsWithMove: 0
+    damage: 1
   - MoveCells: {x: 0, y: 3}
-    IsJump: 0
+    isJump: 0
     IsWithMove: 0
+    damage: 1
   - MoveCells: {x: 0, y: 4}
-    IsJump: 0
+    isJump: 0
     IsWithMove: 0
+    damage: 1
   - MoveCells: {x: -2, y: 0}
-    IsJump: 0
+    isJump: 0
     IsWithMove: 0
+    damage: 1
   - MoveCells: {x: -3, y: 0}
-    IsJump: 0
+    isJump: 0
     IsWithMove: 0
+    damage: 1
   - MoveCells: {x: -4, y: 0}
-    IsJump: 0
+    isJump: 0
     IsWithMove: 0
+    damage: 1
   - MoveCells: {x: 0, y: -2}
-    IsJump: 0
+    isJump: 0
     IsWithMove: 0
+    damage: 1
   - MoveCells: {x: 0, y: -3}
-    IsJump: 0
+    isJump: 0
     IsWithMove: 0
+    damage: 1
   - MoveCells: {x: 0, y: -4}
-    IsJump: 0
+    isJump: 0
     IsWithMove: 0
+    damage: 1
   OnlyMoveHighlight: {fileID: 4899599147563698624, guid: 4bd93e001cbf2df40a7b9bc243c65fbc, type: 3}
   TakeAndMoveHighlight: {fileID: 4899599147563698624, guid: 2edb5a5b045c985438df22e7d3522f20, type: 3}
   OnlyTakeWithMoveHighlight: {fileID: 4899599147563698624, guid: e93fcb011bd1a9c4ca120c8025133af0, type: 3}
