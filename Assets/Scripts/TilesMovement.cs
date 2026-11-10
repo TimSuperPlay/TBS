@@ -24,6 +24,10 @@ public class TilesMovement : MonoBehaviour
     private float visualMovementprocent, selectedTimer;
     private readonly List<GameObject> spawnedHighlights = new();
 
+    public bool CanLocalInput => LanMultiplayer.Instance == null
+        || !LanMultiplayer.Instance.UsesNetworkRules
+        || LanMultiplayer.Instance.CanLocalFigureAct(this);
+
     void Start()
     {
         statesStorage = GameObject.FindGameObjectWithTag("GameManager").GetComponent<StatesStorage>();
@@ -63,6 +67,7 @@ public class TilesMovement : MonoBehaviour
     }
     void Select()
     {
+        if (!CanLocalInput) return;
         if (statesStorage.isSelected) return;
         Debug.Log("selected");
         statesStorage.isSelected = true; //Почему то не задается
@@ -136,8 +141,15 @@ public class TilesMovement : MonoBehaviour
 
     public void MoveToTile(int targetX, int targetY, bool isWithMove = true)
     {
-        if (isWithMove && LanMultiplayer.Instance != null)
-            LanMultiplayer.Instance.NotifyLocalMovement(this, targetX, targetY);
+        if (!CanLocalInput) return;
+        if (LanMultiplayer.Instance != null && LanMultiplayer.Instance.UsesNetworkRules)
+        {
+            
+            if (isWithMove)
+                LanMultiplayer.Instance.NotifyLocalMovement(this, targetX, targetY);
+            UnSelect();
+            return;
+        }
         if(isWithMove)
         {
             Vector3 worldOrigin = visual.transform.position;
@@ -150,7 +162,12 @@ public class TilesMovement : MonoBehaviour
             isVisualMoving = true;
             visualMovementprocent = 0f;
         }
-
+        else
+        {
+            GameObject projectile = GameObject.Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+            projectile.GetComponent<Projectile>()?.Init(new(targetX, targetY));
+            shotingParticles.Play();
+        }
         OnMove?.Invoke();
 
         UnSelect();
@@ -171,6 +188,7 @@ public class TilesMovement : MonoBehaviour
     }
     private void OnMouseDown()
     {
+        if (!CanLocalInput) return;
         if(!isActiveAndEnabled) return;
         if (Input.GetMouseButtonDown(0))
         {
@@ -180,6 +198,5 @@ public class TilesMovement : MonoBehaviour
     }
 }
 
-// Сетевой вызов меняет только положение и не повторяет локальные события ресурсов.
 
 

@@ -5,14 +5,32 @@ public class FigureTurn : MonoBehaviour
     private TurnManager turnManager;
     [SerializeField] private TurnManager.Team team;
     [SerializeField] private TilesMovement tilesMovement;
+    [SerializeField] private string networkId;
     private bool couldActLastFrame;
     public TurnManager.Team Team => team;
+    public string NetworkId => networkId;
+    public TilesMovement Movement => tilesMovement != null ? tilesMovement : GetComponent<TilesMovement>();
+
+    private void Awake()
+    {
+        if (tilesMovement == null) tilesMovement = GetComponent<TilesMovement>();
+    }
 
     private void Start()
     {
-        turnManager = GameObject.FindGameObjectWithTag("TurnManager").GetComponent<TurnManager>();
-        turnManager.OnTurnStart.AddListener(TurnStart);
-        turnManager.OnTurnEnd.AddListener(TurnEnd);
+        if (tilesMovement == null || tilesMovement.gameObject != gameObject)
+        {
+            Debug.LogError("[LAN] " + name + ": FigureTurn должен ссылаться на TilesMovement этой же фигуры.");
+            enabled = false;
+            return;
+        }
+        GameObject managerObject = GameObject.FindGameObjectWithTag("TurnManager");
+        turnManager = managerObject != null ? managerObject.GetComponent<TurnManager>() : null;
+        if (turnManager != null)
+        {
+            turnManager.OnTurnStart.AddListener(TurnStart);
+            turnManager.OnTurnEnd.AddListener(TurnEnd);
+        }
         tilesMovement.OnVisualMovementEnd += EndTurn;
 
         if (UsesNetworkRules())
@@ -47,7 +65,7 @@ public class FigureTurn : MonoBehaviour
     private void EndTurn()
     {
         if (UsesNetworkRules()) return;
-        turnManager.EndTurn();
+        if (turnManager != null) turnManager.EndTurn();
     }
 
     private void Update()

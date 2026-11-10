@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7731520374702274553}
   - component: {fileID: 8452544280041259187}
   - component: {fileID: 605631387904438595}
-  - component: {fileID: 4777464287283113367}
+  - component: {fileID: 8389711698015396602}
   m_Layer: 6
   m_Name: Bishop ammo
   m_TagString: Untagged
@@ -4837,7 +4837,7 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
---- !u!114 &4777464287283113367
+--- !u!114 &8389711698015396602
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -4846,8 +4846,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6619638963701069003}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96285ae40a109f4091fcde66a317fae, type: 3}
+  m_Script: {fileID: 11500000, guid: d3bd2ddb44e7c804c9cd8372e0e219d2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TestMoveTowards
-  target: {x: 0, y: 0, z: 0}
-  speed: 750
+  m_EditorClassIdentifier: Assembly-CSharp::Projectile
+  speed: 375
