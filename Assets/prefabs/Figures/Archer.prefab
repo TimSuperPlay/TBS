@@ -223,8 +223,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   landingParticles: {fileID: 3371939130643039289}
-  shotingParticles: {fileID: 0}
-  projectilePrefab: {fileID: 0}
+  shotingParticles: {fileID: 3371939130643039289}
+  projectilePrefab: {fileID: 1197086861397494471, guid: abb7f4ca347b48944bc1b16e284b274e, type: 3}
 --- !u!114 &8779272587663673934
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -239,6 +239,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FigureTurn
   team: 1
   tilesMovement: {fileID: 349741463843057802}
+  networkId: 
 --- !u!114 &3949239147575111975
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -292,7 +293,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10301, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: d3f0bb0ee2707ec4c9499b77a841dd91, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

@@ -140,6 +140,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FigureTurn
   team: 1
   tilesMovement: {fileID: 5989644075388682895}
+  networkId: 
 --- !u!114 &3700608559756413886
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -193,7 +194,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10301, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: d3f0bb0ee2707ec4c9499b77a841dd91, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

@@ -1,40 +1,71 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.Events;
 
 public class Carrieble : MonoBehaviour
 {
     public UnityAction onChange;
-    [SerializeField] int size;
-    public List<string> items;
+    [SerializeField]
+    [FormerlySerializedAs("size")]
+    private int capacity;
+    public List<string> items = new List<string>();
     public bool isFull;
-
-    void Start()
+    private void Awake()
     {
-        isFull = items.Count >= size;
-        while (items.Count > size) items.RemoveAt(items.Count - 1);
+        ApplyNetworkItems(items?.ToArray());
     }
 
-    public void Add(string item)
+    public void ApplyNetworkItems(string[] receivedItems)
     {
-        if (items.Count < size) items.Add(item);
-        onChange?.Invoke();
-        isFull = items.Count >= size;
+        items = new List<string>(receivedItems ?? System.Array.Empty<string>());
+        while (items.Count > Mathf.Max(0, capacity))
+        {
+            items.RemoveAt(items.Count - 1);
+        }
+
+        Changed();
     }
 
-    public void Delete(string item)
+    private void Changed()
     {
-        if (!items.Contains(item)) return;
+        isFull = items.Count >= capacity;
         onChange?.Invoke();
-        items.Remove(item);
-        isFull = false;
     }
 
-    public void Delete(int index)
+    public bool TryAdd(string resourceName)
     {
-        if (index < 0 || index > items.Count - 1) return;
-        onChange?.Invoke();
-        items.RemoveAt(index);
-        isFull = false;
+        if (!LanGameState.CanSimulate || items.Count >= capacity)
+        {
+            return false;
+        }
+
+        items.Add(resourceName);
+        Changed();
+        return true;
+    }
+
+    public void Add(string resourceName)
+    {
+        TryAdd(resourceName);
+    }
+
+    public void Delete(string resourceName)
+    {
+        if (LanGameState.CanSimulate && items.Remove(resourceName))
+        {
+            Changed();
+        }
+    }
+
+    public void Delete(int itemIndex)
+    {
+        if (!LanGameState.CanSimulate || itemIndex < 0 || itemIndex >= items.Count)
+        {
+            return;
+        }
+
+        items.RemoveAt(itemIndex);
+        Changed();
     }
 }

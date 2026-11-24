@@ -2,14 +2,32 @@ using UnityEngine;
 
 public class TerraformingBuilding : MonoBehaviour
 {
-    [SerializeField] TileConfig tileConfig;
+    [SerializeField]
+    private TileConfig tileConfig;
     private TilesGenerator tilesGenerator;
-    private TilesController tilesController;
-    void Awake()
+    private bool tileChanged;
+    public TileConfig Config
     {
-        tilesGenerator = GameObject.FindWithTag("MapManager").GetComponent<TilesGenerator>();
-        tilesController = GameObject.FindWithTag("MapManager").GetComponent<TilesController>();
-        tilesGenerator.ReplaceTile(tilesController.PositionToCordinats(transform.position), tileConfig);
-        //Destroy(gameObject);
+        get
+        {
+            return tileConfig;
+        }
+    }
+
+    private void Update()
+    {
+        if (tileChanged || !LanGameState.CanSimulate)
+        {
+            return;
+        }
+
+        tilesGenerator = FindFirstObjectByType<TilesGenerator>();
+        if (tilesGenerator == null || tileConfig == null)
+        {
+            return;
+        }
+
+        tilesGenerator.ReplaceWorldTile(transform.position, tileConfig);
+        tileChanged = true;
     }
 }

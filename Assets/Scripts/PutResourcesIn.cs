@@ -1,27 +1,56 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class PutResourcesIn : MonoBehaviour
 {
-    [SerializeField] Carrieble carrieble;
-    [SerializeField] LayerMask layerMask;
-    [SerializeField] TilesMovement tilesMovement;
-
-    void Start()
+    [SerializeField]
+    [FormerlySerializedAs("carrieble")]
+    private Carrieble inventory;
+    [SerializeField]
+    [FormerlySerializedAs("layerMask")]
+    private LayerMask resourceLayers;
+    [SerializeField]
+    [FormerlySerializedAs("tilesMovement")]
+    private TilesMovement figureMovement;
+    private void Start()
     {
-        tilesMovement.OnMove += TryToPut;
+        if (figureMovement != null)
+        {
+            figureMovement.OnMove += TryToPut;
+        }
     }
 
-    void TryToPut()
+    private void OnDestroy()
     {
-        RaycastHit2D onSomething = Physics2D.BoxCast(transform.position, new(0.9f, 0.9f), 0, Vector2.zero, 0, layerMask);
-        if (!onSomething) onSomething = Physics2D.BoxCast(transform.position, new(0.9f, 0.9f), 0, Vector2.zero, 0, layerMask);
-        if (!onSomething) return;
-
-        IResourceReceiver receiver = onSomething.collider.GetComponent<IResourceReceiver>();
-        if (receiver == null) return;
-        if (carrieble.items.Count <= 0) return;
-        receiver.AddResource(carrieble.items[0]);
-        carrieble.Delete(0);
+        if (figureMovement != null)
+        {
+            figureMovement.OnMove -= TryToPut;
+        }
     }
 
+    private void TryToPut()
+    {
+        if (!LanGameState.CanSimulate || inventory == null || inventory.items.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var targetCollider in Physics2D.OverlapBoxAll(transform.position, new Vector2(.9f, .9f), 0, resourceLayers))
+        {
+            if (targetCollider.transform.IsChildOf(transform))
+            {
+                continue;
+            }
+
+            IResourceReceiver resourceReceiver = targetCollider.GetComponentInParent<IResourceReceiver>();
+            if (resourceReceiver == null)
+            {
+                continue;
+            }
+
+            resourceReceiver.AddResource(inventory.items[0]);
+            inventory.Delete(0);
+            return;
+        }
+    }
 }

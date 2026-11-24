@@ -3,54 +3,114 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class FiguresProducingBuilding : MonoBehaviour, IResourceReceiver
 {
-    [SerializeField] FiguresToBuild[] figuresToBuild;
+    [SerializeField]
+    [FormerlySerializedAs("figuresToBuild")]
+    private FiguresToBuild[] figureRecipes;
     private GameObject mapManager;
-    private List<string> resourcesIn = new();
-
-    public void AddResource(string resource)
+    private List<string> storedResources = new();
+    public string[] Inputs
     {
-        resourcesIn.Add(resource);
-        FiguresToBuild toBuild = null;
-        foreach (FiguresToBuild buildingToBuild in figuresToBuild)
+        get
         {
-            if (buildingToBuild.resourcesNeeded != null && buildingToBuild.resourcesNeeded.SequenceEqual(resourcesIn))
-            {
-                toBuild = buildingToBuild;
-                break;
-            }
+            return storedResources.ToArray();
         }
-        if (toBuild == null) return;
+    }
 
-        mapManager = GameObject.FindGameObjectWithTag("MapManager");
-        TilesGenerator tilesGenerator = mapManager.GetComponent<TilesGenerator>();
-        TilesController tilesController = mapManager.GetComponent<TilesController>();
+    public void ApplyInputs(string[] receivedResources)
+    {
+        storedResources = new List<string>(receivedResources ?? Array.Empty<string>());
+    }
 
-        Vector2Int[] directions =
+    public IEnumerable<GameObject> Prefabs
+    {
+        get
+        {
+            return figureRecipes == null ? Enumerable.Empty<GameObject>() : figureRecipes.Select(recipe => recipe.buildingPrefab);
+        }
+    }
+
+    public void AddResource(string resourceName)
+    {
+        if (!LanGameState.CanSimulate)
+        {
+            return;
+        }
+
+        storedResources.Add(resourceName);
+        TryProduce();
+    }
+
+    private void Update()
+    {
+        if (LanGameState.CanSimulate && storedResources.Count > 0)
+        {
+            TryProduce();
+        }
+    }
+
+    private void TryProduce()
+    {
+        if (figureRecipes == null)
+        {
+            return;
+        }
+
+        foreach (var recipe in figureRecipes)
+        {
+            if (!LanWorldReplicator.CanSpawn(recipe.buildingPrefab)
+                || !LanWorldReplicator.HasResources(storedResources, recipe.resourcesNeeded))
             {
-            Vector2Int.up,
-            Vector2Int.down,
-            Vector2Int.left,
-            Vector2Int.right
+                continue;
+            }
+
+            var tilesController = FindFirstObjectByType<TilesController>();
+            var tilesGenerator = FindFirstObjectByType<TilesGenerator>();
+            if (tilesController == null || tilesGenerator == null)
+            {
+                return;
+            }
+
+            Vector2Int buildingCoordinates = tilesController.PositionToCordinats(transform.position);
+            Vector2Int[] directions =
+            {
+                Vector2Int.up,
+                Vector2Int.down,
+                Vector2Int.left,
+                Vector2Int.right
             };
 
-        Vector2Int point = tilesController.PositionToCordinats(transform.position);
-        foreach (Vector2Int direction in directions)
-        {
-            Vector2Int position = tilesController.PositionToCordinats((Vector2)transform.position + direction);
-            tilesGenerator.SpawnedTiles.TryGetValue(position, out TileConfig tile);
-            if (tile == null) continue;
-            if (tile.normalSpeedOn <= 0) continue;
-            else
+            foreach (Vector2Int direction in directions)
             {
-                point = position;
-                break;
+                Vector3 spawnPosition = tilesController.CoordinatesToPosition(buildingCoordinates + direction);
+                if (!tilesGenerator.TryGetWorldTile(spawnPosition, out TileConfig tile) || tile.normalSpeedOn <= 0)
+                {
+                    continue;
+                }
+
+                bool cellOccupied = FindObjectsByType<TilesMovement>(FindObjectsSortMode.None)
+                    .Any(existingFigure => (existingFigure.transform.position - spawnPosition).sqrMagnitude < .1f);
+                if (cellOccupied)
+                {
+                    continue;
+                }
+
+                if (LanWorldReplicator.Spawn(recipe.buildingPrefab, spawnPosition, LanWorldReplicator.TeamOf(gameObject)) == null)
+                {
+                    return;
+                }
+
+                foreach (string recipeResource in recipe.resourcesNeeded)
+                {
+                    storedResources.Remove(recipeResource);
+                }
+
+                return;
             }
         }
-
-        Instantiate(toBuild.buildingPrefab, tilesController.CoordinatesToPosition(point), Quaternion.identity);
     }
 
     [Serializable]

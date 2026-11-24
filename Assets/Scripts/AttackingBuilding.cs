@@ -1,45 +1,68 @@
-using Unity.Mathematics;
+using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
 
 public class AttackingBuilding : MonoBehaviour
 {
-    [SerializeField] int radius;
-    [SerializeField] float damage;
-    [SerializeField] TurnManager.Team team;
-    [SerializeField] bool isHitAll;
+    [SerializeField]
+    private int radius;
+    [SerializeField]
+    private float damage;
+    [SerializeField]
+    private TurnManager.Team team;
+    [SerializeField]
+    private bool isHitAll;
     private TurnManager turnManager;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public TurnManager.Team Team
     {
-        turnManager = GameObject.FindGameObjectWithTag("TurnManager").GetComponent<TurnManager>();
-        turnManager.OnTurnStart.AddListener(TryAttack);
+        get
+        {
+            return team;
+        }
     }
 
-    // Update is called once per frame
-    void TryAttack(TurnManager.Team currentTeam)
+    public void ConfigureTeam(TurnManager.Team ownerTeam)
     {
-        if (currentTeam != team) return;
-        List<RaycastHit2D> targets = new(Physics2D.CircleCastAll(transform.position, radius, Vector2.zero));
-        targets.RemoveAll(hit => hit.transform.CompareTag(gameObject.tag));
-        if (targets.Count <= 0) return;
-        if (isHitAll)
+        team = ownerTeam;
+    }
+
+    private void Start()
+    {
+        turnManager = FindFirstObjectByType<TurnManager>();
+        if (turnManager != null)
         {
-            foreach (RaycastHit2D hit in targets)
-            {
-                hit.transform.gameObject.GetComponent<Health>()?.DealDamage(damage);
-            }
+            turnManager.OnTurnStart.AddListener(TryAttack);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (turnManager != null)
+        {
+            turnManager.OnTurnStart.RemoveListener(TryAttack);
+        }
+    }
+
+    private void TryAttack(TurnManager.Team currentTeam)
+    {
+        if (!LanGameState.CanSimulate || currentTeam != team)
+        {
             return;
         }
-        GameObject target = null;
-        float lowestDistance = float.PositiveInfinity;
-        foreach (RaycastHit2D hit in targets)
+
+        var targets = Physics2D.OverlapCircleAll(transform.position, radius).Select(targetCollider => targetCollider.GetComponentInParent<Health>())
+            .Where(health => health != null && health.Current > 0 && health.gameObject != gameObject
+            && LanWorldReplicator.TeamOf(health.gameObject) != (int)team)
+            .Distinct()
+            .OrderBy(health => Vector2.Distance(transform.position, health.transform.position))
+            .ToArray();
+        foreach (Health target in targets)
         {
-            float distance = Vector2.Distance(transform.position, hit.transform.position);
-            if (distance >= lowestDistance) continue;
-            lowestDistance = distance;
-            target = hit.transform.gameObject;
+            target.DealDamage(damage);
+            if (!isHitAll)
+            {
+                break;
+            }
         }
-        target.transform.gameObject.GetComponent<Health>()?.DealDamage(damage);
     }
 }

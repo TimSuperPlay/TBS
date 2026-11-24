@@ -1,36 +1,96 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class ProducingBuilding : MonoBehaviour
 {
-    [SerializeField] string Resource;
-    [SerializeField] int cooldown;
-    [SerializeField] Carrieble carrieble;
-    [SerializeField] TurnManager.Team team;
-    [SerializeField] PixelRadialController pixelRadialController;
+    [SerializeField]
+    [FormerlySerializedAs("Resource")]
+    private string resourceName;
+    [SerializeField]
+    [FormerlySerializedAs("cooldown")]
+    private int productionIntervalTurns;
+    [SerializeField]
+    [FormerlySerializedAs("carrieble")]
+    private Carrieble inventory;
+    [SerializeField]
+    private TurnManager.Team team;
+    [SerializeField]
+    private PixelRadialController pixelRadialController;
     private TurnManager turnManager;
-    private int turnsPassed;
-
-    void Start()
+    private int elapsedProductionTurns;
+    public TurnManager.Team Team
     {
-        turnManager = GameObject.FindGameObjectWithTag("TurnManager").GetComponent<TurnManager>();
-        turnManager.OnTurnStart.AddListener(TurnStart);
-        turnsPassed = 0;
-        pixelRadialController.fillAmount = 0;
+        get
+        {
+            return team;
+        }
     }
 
-    void TurnStart(TurnManager.Team currentTeam)
+    public int ProductionTicks
     {
-        if (team != currentTeam) return;
-        if (carrieble.isFull) return;
-        if (turnsPassed < cooldown)
+        get
         {
-            turnsPassed++;
-            pixelRadialController.fillAmount = (float) turnsPassed / cooldown;
+            return elapsedProductionTurns;
+        }
+    }
+
+    public void ConfigureTeam(TurnManager.Team ownerTeam)
+    {
+        team = ownerTeam;
+    }
+
+    public void ApplyProductionTicks(int elapsedTurns)
+    {
+        elapsedProductionTurns = elapsedTurns;
+        if (pixelRadialController != null)
+        {
+            pixelRadialController.fillAmount = (float)elapsedProductionTurns / Mathf.Max(1, productionIntervalTurns);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (turnManager != null)
+        {
+            turnManager.OnTurnStart.RemoveListener(TurnStart);
+        }
+    }
+
+    private void Start()
+    {
+        turnManager = FindFirstObjectByType<TurnManager>();
+        if (turnManager != null)
+        {
+            turnManager.OnTurnStart.AddListener(TurnStart);
+        }
+
+        if (inventory == null)
+        {
+            inventory = GetComponent<Carrieble>();
+        }
+
+        ApplyProductionTicks(elapsedProductionTurns);
+    }
+
+    private void TurnStart(TurnManager.Team currentTeam)
+    {
+        if (!LanGameState.CanSimulate || team != currentTeam || inventory == null)
+        {
             return;
         }
-        carrieble.Add(Resource);
-        turnsPassed = 0;
-        pixelRadialController.fillAmount = 1;
-    }
 
+        if (inventory.isFull)
+        {
+            return;
+        }
+
+        ApplyProductionTicks(elapsedProductionTurns + 1);
+        if (elapsedProductionTurns < Mathf.Max(1, productionIntervalTurns))
+        {
+            return;
+        }
+
+        inventory.Add(resourceName);
+        ApplyProductionTicks(0);
+    }
 }

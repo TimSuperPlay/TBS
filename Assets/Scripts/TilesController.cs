@@ -5,56 +5,78 @@ using UnityEngine;
 public class TilesController : MonoBehaviour
 {
     [Header("Grid Size")]
-    [SerializeField] private int xLength, yLength;
-
+    [SerializeField]
+    private int xLength;
+    [SerializeField]
+    private int yLength;
     [Header("Tiles Step")]
-    [SerializeField] private float xStep, yStep;
-
+    [SerializeField]
+    private float xStep;
+    [SerializeField]
+    private float yStep;
     [Header("Start Grid Position")]
-    [SerializeField] private Vector3 startingPoint;
-
+    [SerializeField]
+    private Vector3 startingPoint;
     [Header("Biomes")]
-    [SerializeField] private TileConfig[] TileConfigs;
-
+    [SerializeField]
+    private TileConfig[] TileConfigs;
     [Header("Biomes cordinats")]
     public List<Tile> Tiles = new();
-
-    public float XStep { get => xStep;}
-    public float YStep { get => yStep; }
-    public Vector3 StartingPoint { get => startingPoint;}
-    
-    public Vector3 CoordinatesToPosition(int X, int Y)
+    public float XStep
     {
-        float x = startingPoint.x + X * xStep;
-        float y = startingPoint.y + Y * yStep;
-        return (new(x, y));
+        get
+        {
+            return xStep;
+        }
+    }
+
+    public float YStep
+    {
+        get
+        {
+            return yStep;
+        }
+    }
+
+    public Vector3 StartingPoint
+    {
+        get
+        {
+            return startingPoint;
+        }
+    }
+
+    public Vector3 CoordinatesToPosition(int column, int row)
+    {
+        float worldX = startingPoint.x + column * xStep;
+        float worldY = startingPoint.y + row * yStep;
+        return new Vector3(worldX, worldY);
     }
 
     public Vector3 CoordinatesToPosition(Vector2Int coordinates)
     {
-        float x = startingPoint.x + coordinates.x * xStep;
-        float y = startingPoint.y + coordinates.y * yStep;
-        return (new(x, y));
+        float worldX = startingPoint.x + coordinates.x * xStep;
+        float worldY = startingPoint.y + coordinates.y * yStep;
+        return new Vector3(worldX, worldY);
     }
 
-    public Vector2Int PositionToCordinats(float X, float Y)
+    public Vector2Int PositionToCordinats(float worldX, float worldY)
     {
-        int x = (int) Math.Round((startingPoint.x + X) / xStep);
-        int y = (int) Math.Round((startingPoint.y + Y) / yStep);
-        return (new(x, y));
+        int column = (int)Math.Round((worldX - startingPoint.x) / xStep);
+        int row = (int)Math.Round((worldY - startingPoint.y) / yStep);
+        return (new(column, row));
     }
 
-    public Vector2Int PositionToCordinats(Vector2 position)
+    public Vector2Int PositionToCordinats(Vector2 worldPosition)
     {
-        int x = (int)Math.Round((startingPoint.x + position.x) / xStep);
-        int y = (int)Math.Round((startingPoint.y + position.y) / yStep);
-        return (new(x, y));
+        return PositionToCordinats(worldPosition.x, worldPosition.y);
     }
 
     [Serializable]
     public class Tile
     {
-        public int X, Y;
+        public int X;
+        public int Y;
         public string type;
     }
 }

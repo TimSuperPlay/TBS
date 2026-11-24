@@ -1,43 +1,85 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class FigureTurn : MonoBehaviour
 {
     private TurnManager turnManager;
-    [SerializeField] private TurnManager.Team team;
-    [SerializeField] private TilesMovement tilesMovement;
-    [SerializeField] private string networkId;
+    [SerializeField]
+    private TurnManager.Team team;
+    [SerializeField]
+    [FormerlySerializedAs("tilesMovement")]
+    private TilesMovement figureMovement;
+    [SerializeField]
+    private string networkId;
     private bool couldActLastFrame;
-    public TurnManager.Team Team => team;
-    public string NetworkId => networkId;
-    public TilesMovement Movement => tilesMovement != null ? tilesMovement : GetComponent<TilesMovement>();
+    public TurnManager.Team Team
+    {
+        get
+        {
+            return team;
+        }
+    }
+
+    public string NetworkId
+    {
+        get
+        {
+            return networkId;
+        }
+    }
+
+    public TilesMovement Movement
+    {
+        get
+        {
+            return figureMovement != null ? figureMovement : GetComponent<TilesMovement>();
+        }
+    }
+
+    public void ConfigureNetworkFigure(string figureId, TurnManager.Team ownerTeam)
+    {
+        networkId = figureId;
+        team = ownerTeam;
+        if (figureMovement == null)
+        {
+            figureMovement = GetComponent<TilesMovement>();
+        }
+    }
 
     private void Awake()
     {
-        if (tilesMovement == null) tilesMovement = GetComponent<TilesMovement>();
+        if (figureMovement == null)
+        {
+            figureMovement = GetComponent<TilesMovement>();
+        }
     }
 
     private void Start()
     {
-        if (tilesMovement == null || tilesMovement.gameObject != gameObject)
+        if (figureMovement == null || figureMovement.gameObject != gameObject)
         {
             Debug.LogError("[LAN] " + name + ": FigureTurn должен ссылаться на TilesMovement этой же фигуры.");
             enabled = false;
             return;
         }
-        GameObject managerObject = GameObject.FindGameObjectWithTag("TurnManager");
-        turnManager = managerObject != null ? managerObject.GetComponent<TurnManager>() : null;
+
+        GameObject turnManagerObject = GameObject.FindGameObjectWithTag("TurnManager");
+        turnManager = turnManagerObject != null ? turnManagerObject.GetComponent<TurnManager>() : null;
         if (turnManager != null)
         {
             turnManager.OnTurnStart.AddListener(TurnStart);
             turnManager.OnTurnEnd.AddListener(TurnEnd);
         }
-        tilesMovement.OnVisualMovementEnd += EndTurn;
 
+        figureMovement.OnVisualMovementEnd += EndTurn;
         if (UsesNetworkRules())
         {
-            tilesMovement.enabled = true;
+            figureMovement.enabled = true;
             couldActLastFrame = LanMultiplayer.Instance.CanLocalTeamAct(team);
-            if (!couldActLastFrame) tilesMovement.UnSelect();
+            if (!couldActLastFrame)
+            {
+                figureMovement.UnSelect();
+            }
         }
     }
 
@@ -50,31 +92,56 @@ public class FigureTurn : MonoBehaviour
     {
         if (UsesNetworkRules())
         {
-            tilesMovement.enabled = true;
+            figureMovement.enabled = true;
             return;
         }
-        if (team == currentTeam) tilesMovement.enabled = true;
+
+        if (team == currentTeam)
+        {
+            figureMovement.enabled = true;
+        }
     }
 
     private void TurnEnd(TurnManager.Team currentTeam)
     {
-        if (UsesNetworkRules()) return;
-        if (team == currentTeam) tilesMovement.enabled = false;
+        if (UsesNetworkRules())
+        {
+            return;
+        }
+
+        if (team == currentTeam)
+        {
+            figureMovement.enabled = false;
+        }
     }
 
     private void EndTurn()
     {
-        if (UsesNetworkRules()) return;
-        if (turnManager != null) turnManager.EndTurn();
+        if (UsesNetworkRules())
+        {
+            return;
+        }
+
+        if (turnManager != null)
+        {
+            turnManager.EndTurn();
+        }
     }
 
     private void Update()
     {
-        if (!UsesNetworkRules()) return;
+        if (!UsesNetworkRules())
+        {
+            return;
+        }
 
-        tilesMovement.enabled = true;
+        figureMovement.enabled = true;
         bool canAct = LanMultiplayer.Instance.CanLocalTeamAct(team);
-        if (couldActLastFrame && !canAct) tilesMovement.UnSelect();
+        if (couldActLastFrame && !canAct)
+        {
+            figureMovement.UnSelect();
+        }
+
         couldActLastFrame = canAct;
     }
 
@@ -85,6 +152,10 @@ public class FigureTurn : MonoBehaviour
             turnManager.OnTurnStart.RemoveListener(TurnStart);
             turnManager.OnTurnEnd.RemoveListener(TurnEnd);
         }
-        if (tilesMovement != null) tilesMovement.OnVisualMovementEnd -= EndTurn;
+
+        if (figureMovement != null)
+        {
+            figureMovement.OnVisualMovementEnd -= EndTurn;
+        }
     }
 }

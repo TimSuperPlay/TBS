@@ -1,66 +1,167 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 using System.Linq;
 
 public class ReproducingBuilding : MonoBehaviour, IResourceReceiver
 {
-    [SerializeField] string resourceProdusing;
-    [SerializeField] string[] resourcesNeeded;
-    [SerializeField] List<string> resourcesIn;
-    [SerializeField] int cooldown;
-    [SerializeField] Carrieble carrieble;
-    [SerializeField] TurnManager.Team team;
-    [SerializeField] PixelRadialController pixelRadialController;
+    [SerializeField]
+    [FormerlySerializedAs("resourceProdusing")]
+    private string producedResourceName;
+    [SerializeField]
+    private string[] resourcesNeeded;
+    [SerializeField]
+    [FormerlySerializedAs("resourcesIn")]
+    private List<string> storedResources = new List<string>();
+    [SerializeField]
+    [FormerlySerializedAs("cooldown")]
+    private int productionIntervalTurns;
+    [SerializeField]
+    [FormerlySerializedAs("carrieble")]
+    private Carrieble inventory;
+    [SerializeField]
+    private TurnManager.Team team;
+    [SerializeField]
+    private PixelRadialController pixelRadialController;
     private TurnManager turnManager;
-    private int turnsPassed;
-
-    void Start()
+    private int elapsedProductionTurns;
+    public TurnManager.Team Team
     {
-        turnManager = GameObject.FindGameObjectWithTag("TurnManager").GetComponent<TurnManager>();
-        turnManager.OnTurnStart.AddListener(TurnStart);
-        turnsPassed = 0;
-        pixelRadialController.fillAmount = 0;
+        get
+        {
+            return team;
+        }
     }
 
-    void TurnStart(TurnManager.Team currentTeam)
+    public int ProductionTicks
     {
-        if (team != currentTeam) return;
-        if (carrieble.isFull) return;
-        if (!HasEnoughResources()) return;
-        if (turnsPassed < cooldown)
+        get
         {
-            turnsPassed++;
-            pixelRadialController.fillAmount = (float) turnsPassed / cooldown;
+            return elapsedProductionTurns;
+        }
+    }
+
+    public void ConfigureTeam(TurnManager.Team ownerTeam)
+    {
+        team = ownerTeam;
+    }
+
+    public void ApplyProductionTicks(int elapsedTurns)
+    {
+        elapsedProductionTurns = elapsedTurns;
+        if (pixelRadialController != null)
+        {
+            pixelRadialController.fillAmount = (float)elapsedProductionTurns / Mathf.Max(1, productionIntervalTurns);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (turnManager != null)
+        {
+            turnManager.OnTurnStart.RemoveListener(TurnStart);
+        }
+    }
+
+    private void Start()
+    {
+        turnManager = FindFirstObjectByType<TurnManager>();
+        if (turnManager != null)
+        {
+            turnManager.OnTurnStart.AddListener(TurnStart);
+        }
+
+        if (inventory == null)
+        {
+            inventory = GetComponent<Carrieble>();
+        }
+
+        if (storedResources == null)
+        {
+            storedResources = new List<string>();
+        }
+
+        ApplyProductionTicks(elapsedProductionTurns);
+    }
+
+    private void TurnStart(TurnManager.Team currentTeam)
+    {
+        if (!LanGameState.CanSimulate || team != currentTeam || inventory == null)
+        {
             return;
         }
-        Debug.Log("reprodusing building sucseed");
-        carrieble.Add(resourceProdusing);
-        resourcesIn.Clear();
-        turnsPassed = 0;
-        pixelRadialController.fillAmount = 1;
-    }
 
-    public void AddResource(string resource)
-    {
-        Debug.Log("addet: " + resource);
-        resourcesIn.Add(resource);
-    }
-
-    bool HasEnoughResources()
-    {
-        var needed = resourcesNeeded
-            .GroupBy(resource => resource)
-            .ToDictionary(group => group.Key, group => group.Count());
-        var current = resourcesIn
-            .GroupBy(resource => resource)
-            .ToDictionary(group => group.Key, group => group.Count());
-        foreach (var resource in needed)
+        if (inventory.isFull)
         {
-            if(!current.TryGetValue(resource.Key, out int amount)) return false;
-            if(amount<resource.Value) return false;
+            return;
         }
+
+        if (!HasEnoughResources())
+        {
+            return;
+        }
+
+        ApplyProductionTicks(elapsedProductionTurns + 1);
+        if (elapsedProductionTurns < Mathf.Max(1, productionIntervalTurns))
+        {
+            return;
+        }
+
+        inventory.Add(producedResourceName);
+        foreach (string resourceName in resourcesNeeded)
+        {
+            storedResources.Remove(resourceName);
+        }
+
+        ApplyProductionTicks(0);
+    }
+
+    public void AddResource(string resourceName)
+    {
+        if (!LanGameState.CanSimulate)
+        {
+            return;
+        }
+
+        storedResources.Add(resourceName);
+    }
+
+    public string[] Inputs
+    {
+        get
+        {
+            return storedResources.ToArray();
+        }
+    }
+
+    public void ApplyInputs(string[] receivedResources)
+    {
+        storedResources = new List<string>(receivedResources ?? Array.Empty<string>());
+    }
+
+    private bool HasEnoughResources()
+    {
+        if (resourcesNeeded == null)
+        {
+            return false;
+        }
+
+        var requiredAmounts = resourcesNeeded.GroupBy(resourceName => resourceName).ToDictionary(group => group.Key, group => group.Count());
+        var storedAmounts = storedResources.GroupBy(resourceName => resourceName).ToDictionary(group => group.Key, group => group.Count());
+        foreach (var resourceName in requiredAmounts)
+        {
+            if (!storedAmounts.TryGetValue(resourceName.Key, out int amount))
+            {
+                return false;
+            }
+
+            if (amount < resourceName.Value)
+            {
+                return false;
+            }
+        }
+
         return true;
     }
-
 }

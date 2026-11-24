@@ -4,10 +4,25 @@ using UnityEngine.Events;
 
 public class TurnManager : MonoBehaviour
 {
-    public enum Team { White, Black, Red, Blue }
-    private Team currentTeam;
-    public UnityEvent<Team> OnTurnStart, OnTurnEnd;
+    public enum Team
+    {
+        White,
+        Black,
+        Red,
+        Blue
+    }
 
+    private Team currentTeam;
+    public Team CurrentTeam
+    {
+        get
+        {
+            return currentTeam;
+        }
+    }
+
+    public UnityEvent<Team> OnTurnStart;
+    public UnityEvent<Team> OnTurnEnd;
     private static bool UsesNetworkRules()
     {
         return LanMultiplayer.Instance != null && LanMultiplayer.Instance.UsesNetworkRules;
@@ -16,21 +31,48 @@ public class TurnManager : MonoBehaviour
     private void Start()
     {
         currentTeam = Team.White;
-        if (UsesNetworkRules()) return;
+        if (UsesNetworkRules())
+        {
+            return;
+        }
+
         OnTurnStart.Invoke(currentTeam);
     }
 
     private void Update()
     {
-        if (UsesNetworkRules()) return;
-        if (Input.GetKeyDown("2")) EndTurn();
+        if (UsesNetworkRules())
+        {
+            return;
+        }
+
+        if (Input.GetKeyDown("2"))
+        {
+            EndTurn();
+        }
     }
 
     public void EndTurn()
     {
-        if (UsesNetworkRules()) return;
+        if (UsesNetworkRules())
+        {
+            return;
+        }
+
         OnTurnEnd.Invoke(currentTeam);
         currentTeam = (Team)(((int)currentTeam + 1) % Enum.GetValues(typeof(Team)).Length);
         OnTurnStart.Invoke(currentTeam);
+    }
+
+    public void BeginNetworkTurn(Team team)
+    {
+        if (!LanGameState.UsesNetwork || !LanGameState.CanSimulate)
+        {
+            return;
+        }
+
+        OnTurnEnd?.Invoke(currentTeam);
+        currentTeam = team;
+        OnTurnStart?.Invoke(currentTeam);
     }
 }

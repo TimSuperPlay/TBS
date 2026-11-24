@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.Events;
 
 public class TilesMovement : MonoBehaviour
@@ -8,195 +9,434 @@ public class TilesMovement : MonoBehaviour
     public UnityAction OnMove;
     public UnityAction OnVisualMovementEnd;
     private StatesStorage statesStorage;
-    private int x, y;
-    TilesController tilesController;
-    [SerializeField] FiguresConfig config;
-    [Header("visual settings")] 
-    [SerializeField] GameObject visual;
-    [SerializeField] float visualMovementSpeed;
-    [SerializeField] AnimationCurve visualMovementCurve, visualJumpCurve;
-    [SerializeField] ParticleSystem landingParticles;
+    private int currentX;
+    private int currentY;
+    private TilesController tilesController;
+    [SerializeField]
+    [FormerlySerializedAs("config")]
+    private FiguresConfig figureConfig;
+    [Header("visual settings")]
+    [SerializeField]
+    [FormerlySerializedAs("visual")]
+    private GameObject figureVisual;
+    [SerializeField]
+    [FormerlySerializedAs("visualMovementSpeed")]
+    private float movementAnimationSpeed;
+    [SerializeField]
+    [FormerlySerializedAs("visualMovementCurve")]
+    private AnimationCurve movementCurve;
+    [SerializeField]
+    [FormerlySerializedAs("visualJumpCurve")]
+    private AnimationCurve jumpCurve;
+    [SerializeField]
+    private ParticleSystem landingParticles;
     [Header("NoMove visual settings")]
-    [SerializeField] ParticleSystem shotingParticles;
-    [SerializeField] GameObject projectilePrefab;
-    private bool selected, isVisualMoving;
-    private Vector3 visualMovementOrigin, visualMovementEnd;
-    private float visualMovementprocent, selectedTimer;
-    private readonly List<GameObject> spawnedHighlights = new();
+    [SerializeField]
+    [FormerlySerializedAs("shotingParticles")]
+    private ParticleSystem shootingParticles;
+    [SerializeField]
+    private GameObject projectilePrefab;
+    private bool isSelected;
+    private bool isVisualMoving;
+    private Vector3 animationStartPosition;
+    private Vector3 animationEndPosition;
+    private float movementProgress;
+    private Vector3 visualDefaultPosition;
+    private bool isInitialized;
+    private bool isAttackAnimation;
+    public bool LastActionMoved { get; private set; }
 
-    public bool CanLocalInput => LanMultiplayer.Instance == null
-        || !LanMultiplayer.Instance.UsesNetworkRules
-        || LanMultiplayer.Instance.CanLocalFigureAct(this);
-
-    void Start()
+    private static TilesMovement selectedFigure;
+    public FiguresConfig Config
     {
-        statesStorage = GameObject.FindGameObjectWithTag("GameManager").GetComponent<StatesStorage>();
-        visualMovementprocent = 0;
-        tilesController = GameObject.FindGameObjectWithTag("MapManager").GetComponent<TilesController>();
-        Vector2Int pos = tilesController.PositionToCordinats(transform.position.x, transform.position.y);
-        x = (int)Math.Round((double)pos.x);
-        y = (int)Math.Round((double)pos.y);
+        get
+        {
+            return figureConfig;
+        }
     }
 
-    void Update()
+    public TilesController Grid
     {
-        if (!selected) selectedTimer += Time.deltaTime;
-        else selectedTimer = 0;
-        if (selectedTimer > 0.9) statesStorage.isSelected = false;
-        if (isVisualMoving /*&& visualMovementprocent < 1*/)
+        get
         {
-            float currentJumpHeight = visualJumpCurve.Evaluate(visualMovementprocent);
-            float evaluatedPercent = visualMovementCurve.Evaluate(visualMovementprocent);
-            visual.transform.localPosition = new Vector3(
-            Mathf.Lerp(visualMovementOrigin.x, visualMovementEnd.x, evaluatedPercent),
-            Mathf.Lerp(visualMovementOrigin.y, visualMovementEnd.y, evaluatedPercent) + currentJumpHeight);
-            //visual.transform.localScale = new(1 + currentJumpHeight/4, 1 + currentJumpHeight/4);
+            EnsureInitialized();
+            return tilesController;
+        }
+    }
 
-            visualMovementprocent += Time.deltaTime * visualMovementSpeed;
+    public Vector2Int Coordinates
+    {
+        get
+        {
+            EnsureInitialized();
+            return new Vector2Int(currentX, currentY);
+        }
+    }
 
-            if (visualMovementprocent >= 1)
+    public bool IsAnimating
+    {
+        get
+        {
+            return isVisualMoving;
+        }
+    }
+
+    public float ActionDuration
+    {
+        get
+        {
+            if (isAttackAnimation)
             {
-                landingParticles.Play();
-                isVisualMoving = false;
-                visual.transform.localPosition = visualMovementEnd;
-                visualMovementprocent = 0;
-                OnVisualMovementEnd?.Invoke();
+                return .3f;
             }
 
+            if (figureVisual != null && figureVisual != gameObject)
+            {
+                return 1f / Mathf.Max(.5f, movementAnimationSpeed);
+            }
+
+            return .05f;
         }
     }
-    void Select()
+
+    private readonly List<GameObject> spawnedHighlights = new();
+    public bool CanLocalInput
     {
-        if (!CanLocalInput) return;
-        if (statesStorage.isSelected) return;
+        get
+        {
+            return LanMultiplayer.Instance == null || !LanMultiplayer.Instance.UsesNetworkRules
+                || LanMultiplayer.Instance.CanLocalFigureAct(this);
+        }
+    }
+
+    private void Awake()
+    {
+        EnsureInitialized();
+    }
+
+    private void Start()
+    {
+        EnsureInitialized();
+    }
+
+    private void EnsureInitialized()
+    {
+        if (isInitialized)
+        {
+            return;
+        }
+
+        statesStorage = FindFirstObjectByType<StatesStorage>();
+        tilesController = FindFirstObjectByType<TilesController>();
+        if (tilesController == null)
+        {
+            return;
+        }
+
+        Vector2Int currentCell = tilesController.PositionToCordinats(transform.position);
+        currentX = currentCell.x;
+        currentY = currentCell.y;
+        if (figureVisual != null)
+        {
+            visualDefaultPosition = figureVisual.transform.localPosition;
+        }
+
+        isInitialized = true;
+    }
+
+    private void Update()
+    {
+        if (!isVisualMoving)
+        {
+            return;
+        }
+
+        movementProgress = Mathf.Min(1, movementProgress + Time.deltaTime / ActionDuration);
+        float movementAmount = movementCurve != null && movementCurve.length > 0 ? movementCurve.Evaluate(movementProgress) : movementProgress;
+        float jumpHeight = jumpCurve != null && jumpCurve.length > 0 ? jumpCurve.Evaluate(movementProgress) : 0;
+        if (isAttackAnimation)
+        {
+            float attackOffset = Mathf.Sin(movementProgress * Mathf.PI);
+            figureVisual.transform.localPosition = visualDefaultPosition + animationStartPosition * attackOffset;
+        }
+        else
+        {
+            Vector3 movementPosition = Vector3.LerpUnclamped(animationStartPosition, animationEndPosition, movementAmount);
+            figureVisual.transform.localPosition = movementPosition + Vector3.up * jumpHeight;
+        }
+
+        if (movementProgress < 1)
+        {
+            return;
+        }
+
+        figureVisual.transform.localPosition = animationEndPosition;
+        isVisualMoving = false;
+        if (!isAttackAnimation)
+        {
+            landingParticles?.Play();
+        }
+
+        OnVisualMovementEnd?.Invoke();
+    }
+
+    private void Select()
+    {
+        if (!CanLocalInput || isVisualMoving || figureConfig == null || Grid == null)
+        {
+            return;
+        }
+
+        if (selectedFigure != null && selectedFigure != this)
+        {
+            selectedFigure.UnSelect();
+        }
+
+        selectedFigure = this;
         Debug.Log("selected");
-        statesStorage.isSelected = true; //Почему то не задается
-        selected = true;
-        foreach (var highlight in config.OnlyMove)
+        if (statesStorage != null)
         {
-            int targetX = highlight.MoveCells.x + x;
-            int targetY = highlight.MoveCells.y + y;
+            statesStorage.isSelected = true;
+        }
 
+        isSelected = true;
+        foreach (var movementRule in figureConfig.OnlyMove ?? Array.Empty<FiguresConfig.MoveOrTake>())
+        {
+            if (figureConfig.OnlyMoveHighlight == null || figureConfig.OnlyMoveHighlight.GetComponent<HighlightTileOnlyMove>() == null)
+            {
+                continue;
+            }
+
+            int targetX = movementRule.MoveCells.x + currentX;
+            int targetY = movementRule.MoveCells.y + currentY;
             GameObject spawnedHighlight = Instantiate(
-            config.OnlyMoveHighlight,
+                figureConfig.OnlyMoveHighlight,
                 tilesController.CoordinatesToPosition(targetX, targetY),
                 Quaternion.identity
-                );
-
-            HighlightTileOnlyMove highlightTile = spawnedHighlight.GetComponent<HighlightTileOnlyMove>();
-
-            highlightTile.Init(this, targetX, targetY, highlight.isJump);
-
+            );
+            HighlightTileOnlyMove highlightComponent = spawnedHighlight.GetComponent<HighlightTileOnlyMove>();
+            highlightComponent.Init(this, targetX, targetY, movementRule.isJump);
             spawnedHighlights.Add(spawnedHighlight);
         }
 
-
-        foreach (var highlight in config.TakeAndMove)
+        foreach (var movementRule in figureConfig.TakeAndMove ?? Array.Empty<FiguresConfig.MoveOrTake>())
         {
-            int targetX = highlight.MoveCells.x + x;
-            int targetY = highlight.MoveCells.y + y;
+            if (figureConfig.TakeAndMoveHighlight == null
+                || figureConfig.TakeAndMoveHighlight.GetComponent<HighlightTileTakeAndMove>() == null)
+            {
+                continue;
+            }
 
+            int targetX = movementRule.MoveCells.x + currentX;
+            int targetY = movementRule.MoveCells.y + currentY;
             GameObject spawnedHighlight = Instantiate(
-            config.TakeAndMoveHighlight,
+                figureConfig.TakeAndMoveHighlight,
                 tilesController.CoordinatesToPosition(targetX, targetY),
                 Quaternion.identity
-                );
-
-            HighlightTileTakeAndMove highlightTile = spawnedHighlight.GetComponent<HighlightTileTakeAndMove>();
-
-            highlightTile.Init(this, targetX, targetY, highlight.isJump, highlight.damage);
-
+            );
+            HighlightTileTakeAndMove highlightComponent = spawnedHighlight.GetComponent<HighlightTileTakeAndMove>();
+            highlightComponent.Init(this, targetX, targetY, movementRule.isJump, movementRule.damage);
             spawnedHighlights.Add(spawnedHighlight);
         }
 
-
-        foreach (var highlight in config.OnlyTake)
+        foreach (var movementRule in figureConfig.OnlyTake ?? Array.Empty<FiguresConfig.OnlyAttack>())
         {
-            int targetX = highlight.MoveCells.x + x;
-            int targetY = highlight.MoveCells.y + y;
+            GameObject highlightPrefab = movementRule.IsWithMove ? figureConfig.OnlyTakeWithMoveHighlight : figureConfig.OnlyTakeNoMoveHighlight;
+            if (highlightPrefab == null || highlightPrefab.GetComponent<HighlightTileOnlyTake>() == null)
+            {
+                continue;
+            }
 
+            int targetX = movementRule.MoveCells.x + currentX;
+            int targetY = movementRule.MoveCells.y + currentY;
             GameObject spawnedHighlight = Instantiate(
-            highlight.IsWithMove ? config.OnlyTakeWithMoveHighlight : config.OnlyTakeNoMoveHighlight,
+                movementRule.IsWithMove ? figureConfig.OnlyTakeWithMoveHighlight : figureConfig.OnlyTakeNoMoveHighlight,
                 tilesController.CoordinatesToPosition(targetX, targetY),
                 Quaternion.identity
-                );
-
-            HighlightTileOnlyTake highlightTile = spawnedHighlight.GetComponent<HighlightTileOnlyTake>();
-
-            highlightTile.Init(this, targetX, targetY, highlight.isJump, highlight.IsWithMove, highlight.damage);
-
+            );
+            HighlightTileOnlyTake highlightComponent = spawnedHighlight.GetComponent<HighlightTileOnlyTake>();
+            highlightComponent.Init(this, targetX, targetY, movementRule.isJump, movementRule.IsWithMove, movementRule.damage);
             spawnedHighlights.Add(spawnedHighlight);
         }
     }
 
     public void UnSelect()
     {
-        selected = false;
+        isSelected = false;
+        if (selectedFigure == this)
+        {
+            selectedFigure = null;
+            if (statesStorage != null)
+            {
+                statesStorage.isSelected = false;
+            }
+        }
+
         foreach (GameObject spawnedHighlight in spawnedHighlights)
         {
             Destroy(spawnedHighlight);
         }
+
         spawnedHighlights.Clear();
     }
 
-    public void MoveToTile(int targetX, int targetY, bool isWithMove = true)
+    public void RequestAction(LanFigureAction actionType, int targetX, int targetY)
     {
-        if (!CanLocalInput) return;
-        if (LanMultiplayer.Instance != null && LanMultiplayer.Instance.UsesNetworkRules)
+        if (!CanLocalInput || isVisualMoving)
         {
-            
-            if (isWithMove)
-                LanMultiplayer.Instance.NotifyLocalMovement(this, targetX, targetY);
+            return;
+        }
+
+        if (LanGameState.UsesNetwork)
+        {
+            LanMultiplayer.Instance.NotifyLocalAction(this, actionType, targetX, targetY);
             UnSelect();
             return;
         }
-        if(isWithMove)
-        {
-            Vector3 worldOrigin = visual.transform.position;
-            x = targetX;
-            y = targetY;
-            transform.position = tilesController.CoordinatesToPosition(x, y);
 
-            visualMovementOrigin = visual.transform.parent.InverseTransformPoint(worldOrigin);
-            visualMovementEnd = new Vector3(0, 0, 0);
-            isVisualMoving = true;
-            visualMovementprocent = 0f;
+        if (!LanActionRules.Resolve(
+            this,
+            actionType,
+            targetX,
+            targetY,
+            out Health targetHealth,
+            out float attackDamage,
+            out bool moveAfterAttack,
+            out _
+        ))
+        {
+            return;
+        }
+
+        if (targetHealth != null)
+        {
+            targetHealth.DealDamage(attackDamage);
+        }
+
+        PlayAcceptedAction(targetX, targetY, moveAfterAttack);
+    }
+
+    public void MoveToTile(int targetX, int targetY, bool moveAfterAttack = true)
+    {
+        LanFigureAction actionType = moveAfterAttack ? LanFigureAction.MoveOrAttack : LanFigureAction.AttackOnly;
+        if (moveAfterAttack && !LanActionRules.Resolve(this, actionType, targetX, targetY, out _, out _, out _, out _))
+        {
+            actionType = LanFigureAction.MoveOnly;
+        }
+
+        RequestAction(actionType, targetX, targetY);
+    }
+
+    public void PlayAcceptedAction(int targetX, int targetY, bool moveAfterAttack)
+    {
+        EnsureInitialized();
+        if (tilesController == null)
+        {
+            return;
+        }
+
+        UnSelect();
+        LastActionMoved = moveAfterAttack;
+        isAttackAnimation = !moveAfterAttack;
+        Vector3 destination = tilesController.CoordinatesToPosition(targetX, targetY);
+        if (moveAfterAttack)
+        {
+            Vector3 originalVisualPosition = figureVisual != null ? figureVisual.transform.position : transform.position;
+            currentX = targetX;
+            currentY = targetY;
+            transform.position = destination;
+            isVisualMoving = figureVisual != null && figureVisual != gameObject && figureVisual.transform.parent != null;
+            if (isVisualMoving)
+            {
+                animationStartPosition = figureVisual.transform.parent.InverseTransformPoint(originalVisualPosition);
+                animationEndPosition = visualDefaultPosition;
+                movementProgress = 0;
+                figureVisual.transform.localPosition = animationStartPosition;
+            }
         }
         else
         {
-            GameObject projectile = GameObject.Instantiate(projectilePrefab, transform.position, Quaternion.identity);
-            projectile.GetComponent<Projectile>()?.Init(new(targetX, targetY));
-            shotingParticles.Play();
-        }
-        OnMove?.Invoke();
+            isVisualMoving = figureVisual != null && figureVisual != gameObject && figureVisual.transform.parent != null;
+            if (isVisualMoving)
+            {
+                animationStartPosition = figureVisual.transform.parent.InverseTransformVector((destination - transform.position).normalized * .2f);
+                animationEndPosition = visualDefaultPosition;
+                movementProgress = 0;
+            }
 
-        UnSelect();
+            if (projectilePrefab != null)
+            {
+                GameObject projectile = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+                projectile.GetComponent<Projectile>()?.Init(destination);
+                Destroy(projectile, 10f);
+            }
+
+            shootingParticles?.Play();
+        }
+
+        Physics2D.SyncTransforms();
+        if (moveAfterAttack && LanGameState.CanSimulate)
+        {
+            OnMove?.Invoke();
+        }
+
+        if (!isVisualMoving)
+        {
+            OnVisualMovementEnd?.Invoke();
+        }
     }
 
     public void ApplyNetworkPosition(int targetX, int targetY)
     {
-        x = targetX;
-        y = targetY;
-        if (tilesController == null)
-            tilesController = GameObject.FindGameObjectWithTag("MapManager").GetComponent<TilesController>();
-        transform.position = tilesController.CoordinatesToPosition(x, y);
+        EnsureInitialized();
+        if (currentX == targetX && currentY == targetY)
+        {
+            return;
+        }
+
+        currentX = targetX;
+        currentY = targetY;
+        if (tilesController != null)
+        {
+            transform.position = tilesController.CoordinatesToPosition(currentX, currentY);
+        }
+
         isVisualMoving = false;
-        visualMovementprocent = 0f;
-        if (visual != null)
-            visual.transform.localPosition = Vector3.zero;
+        if (figureVisual != null && figureVisual != gameObject)
+        {
+            figureVisual.transform.localPosition = visualDefaultPosition;
+        }
+
         UnSelect();
     }
+
+    private void OnDisable()
+    {
+        UnSelect();
+    }
+
     private void OnMouseDown()
     {
-        if (!CanLocalInput) return;
-        if(!isActiveAndEnabled) return;
+        if (!CanLocalInput)
+        {
+            return;
+        }
+
+        if (!isActiveAndEnabled)
+        {
+            return;
+        }
+
         if (Input.GetMouseButtonDown(0))
         {
-            if (selected) UnSelect();
-            else Select();
+            if (isSelected)
+            {
+                UnSelect();
+            }
+            else
+            {
+                Select();
+            }
         }
     }
 }
-
-
-

@@ -1,17 +1,36 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class Projectile : MonoBehaviour
 {
-    [SerializeField] float speed;
-    private Vector2 target;
-
-    public void Init(Vector2 target)
+    [SerializeField]
+    [FormerlySerializedAs("speed")]
+    private float movementSpeed, destroyDelay;
+    private Vector3 targetPosition;
+    private bool isInitialized;
+    public float TravelSpeed
     {
-        this.target = target;
+        get
+        {
+            return movementSpeed > 0 ? movementSpeed : 8f;
+        }
     }
 
-    void Update()
+    public void Init(Vector2 targetPosition)
     {
-        transform.position = Vector3.MoveTowards(transform.position, target, speed * Time.deltaTime);
+        this.targetPosition = new Vector3(targetPosition.x, targetPosition.y, transform.position.z);
+        isInitialized = true;
+    }
+
+    private void Update()
+    {
+        if (!isInitialized) return;
+
+        transform.position = Vector3.MoveTowards(transform.position, targetPosition, TravelSpeed * Time.deltaTime);
+        if ((transform.position - targetPosition).sqrMagnitude < 0.0001f)
+        {
+            Destroy(gameObject.GetComponent<SpriteRenderer>());
+            Destroy(gameObject, destroyDelay);
+        }
     }
 }
